@@ -3,7 +3,7 @@ import HelloWorld from "./components/HelloWorld.vue";
 import { io } from "socket.io-client";
 
 // адрес по которому подкл к серверу
-const socket = io("http://localhost:4444");
+// const socket = io("http://localhost:4444");
 </script>
 
 <template>
