@@ -2,9 +2,7 @@ import express from "express";
 import { createServer } from "node:http";
 import cors from "cors";
 import { Server } from "socket.io";
-
 const PORT = 4444;
-
 const app = express();
 app.use(cors());
 
