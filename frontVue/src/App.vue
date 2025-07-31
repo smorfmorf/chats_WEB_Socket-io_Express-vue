@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import { onMounted, provide, ref } from "vue";
-import HelloWorld from "./components/HelloWorld.vue";
 import { io } from "socket.io-client";
-import { useRouter } from "vue-router";
 // адрес по которому подкл к серверу
 const socket = io("http://localhost:4444");
 provide("socketIO", socket);
 
-const router = useRouter();
-
-const user = ref("");
-
-function handleSubmit() {
-  localStorage.setItem("user", user.value);
-  router.push("/home");
-}
-
+// Переключить тему
 const isDark = ref(false);
-
 onMounted(() => {
   isDark.value = document.documentElement.classList.contains("dark");
 });
-
 function toggleTheme() {
   const html = document.documentElement;
   html.classList.toggle("dark");
@@ -31,22 +19,11 @@ function toggleTheme() {
 </script>
 
 <template>
+  <button @click="toggleTheme">Переключить тему</button>
   <div class="bg-white dark:bg-black text-black dark:text-white">
-    <button @click="toggleTheme" class="px-4 py-2 bg-blue-600">
-      Переключить тему
-    </button>
-    <form @submit.prevent="handleSubmit" class="border p-8 grid">
-      <h2>Вход в чат</h2>
-      <input type="text" v-model="user" />
-      {{ user }}
-
-      <button>Войти</button>
-    </form>
-
-    <router-view />
-
-    <hr class="mt-10" />
-    <HelloWorld msg="Vite + Vue" />
+    <div class="p-4 mt-2 border-y-2">
+      <router-view />
+    </div>
   </div>
 </template>
 

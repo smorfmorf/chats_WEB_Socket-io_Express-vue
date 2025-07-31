@@ -1,58 +1,23 @@
-<template>
-  <div>Домашняя страничка</div>
-
-  <form @submit="onSubmit" class="border p-8 grid gap-5">
-    <div class="grid gap-1">
-      <label for="name"></label>
-      <input
-        type="text"
-        id="name"
-        name="email"
-        v-model="email"
-        @blur="handleBlur"
-      />
-      <span v-if="meta.touched && emailError" style="color: red">
-        {{ emailError }}
-      </span>
-    </div>
-
-    <button>Submit</button>
-  </form>
-
-  <code>{{ res }}</code>
-</template>
-
-<!-- VeeValidate + Zod -->
 <script setup lang="ts">
-import { useField, useForm } from "vee-validate";
-import * as zod from "zod";
-import { toTypedSchema } from "@vee-validate/zod";
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
-const validationSchema = toTypedSchema(
-  zod.object({
-    email: zod.string().min(3, { message: "минимум 3 буквы" }),
-  })
-);
+const router = useRouter();
 
-const { handleSubmit, errors } = useForm({
-  validationSchema,
-  initialValues: {
-    email: "", // 👉 обязательно задаём начальное значение!
-  },
-});
+const user = ref("");
 
-const {
-  value: email,
-  errorMessage: emailError,
-  meta,
-  handleBlur,
-} = useField("email");
-
-const res = ref<null | {}>(null);
-
-const onSubmit = handleSubmit((values) => {
-  res.value = JSON.stringify(values, null, 2);
-  // alert(JSON.stringify(values, null, 2));
-});
+function handleSubmit() {
+  localStorage.setItem("user", user.value);
+  router.push("/chat");
+}
 </script>
+
+<template>
+  <form @submit.prevent="handleSubmit" class="border p-8 grid">
+    <h2>Вход в чат</h2>
+    <input type="text" v-model="user" />
+    {{ user }}
+
+    <button>Войти</button>
+  </form>
+</template>
