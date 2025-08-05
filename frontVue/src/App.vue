@@ -25,6 +25,16 @@ function toggleTheme() {
       <router-view />
     </div>
   </div>
+
+  <!-- Портал -->
+  <teleport to="#modal-root" v-if="false">
+    <div class="fixed top-0 left-0 w-full h-full bg-black/50">
+      <div class="bg-white p-6 w-1/2 mx-auto mt-20 rounded">
+        <h2>Это модальное окно</h2>
+        <p>Оно отрендерено вне текущего DOM-узла</p>
+      </div>
+    </div>
+  </teleport>
 </template>
 
 <style scoped>

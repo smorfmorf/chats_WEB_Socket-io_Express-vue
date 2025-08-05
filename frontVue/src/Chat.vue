@@ -1,69 +1,170 @@
 <template>
-  <div class="grid grid-cols-[200px_1fr] border">
-    <div class="flex flex-col gap-4 p-8 border-r-2">
-      <h3 class="text-2xl font-black">users:</h3>
-      <ul>
-        <li>user1</li>
-        <li>user2</li>
-        <li>user3</li>
-      </ul>
+  <div class="grid grid-cols-[minmax(200px,auto)_1fr] border">
+    <!-- sidebar -->
+    <div class="flex flex-col gap-4 p-4 border-r-2">
+      <div
+        class="text-2xl text-center font-bold shadow-black shadow-lg p-1 rounded-xl cursor-pointer hover:bg-fuchsia-200 hover:-translate-y-0.5 transition"
+      >
+        {{ me ?? "undefined user" }}
+      </div>
+      <div>
+        <h3 class="text-2xl font-black">users:</h3>
+        <ul>
+          <li
+            v-for="item in store.users"
+            :key="item.socketID"
+            :class="{ 'bg-fuchsia-200': item.user === me }"
+          >
+            {{ item.user }}
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- main -->
-    <main class="flex flex-col h-[500px] p-8 bg-fuchsia-200">
-      <div class="flex-1 relative">
-        <button class="absolute top-0 right-0 hover:bg-fuchsia-300">
-          Покинуть чат
-        </button>
-
+    <main class="flex flex-col h-[600px] p-6 bg-fuchsia-200">
+      <div
+        ref="scrollContainer"
+        class="flex-1 relative overflow-y-scroll border-2 rounded-lg p-2 border-red-500"
+      >
+        <!-- body_chats -->
         <div class="wrapper-chats mt-20 grid gap-5">
-          <div class="app-chats-message self">
-            <p class="text-purple-500"><img src="./assets/vue.svg" alt="" /></p>
-            <div class="chats">
-              <p>
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                Corporis, magnam!
+          <template v-for="message in messages" :key="message.id">
+            <div class="app-chats-message self" v-if="message.user === me">
+              <p class="text-purple-500 truncate">
+                {{ message.user }}
+                <img src="./assets/vue.svg" alt="" />
               </p>
+              <div class="chats">
+                <p class="text-right truncate">
+                  {{ message.message }}
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div class="app-chats-message">
-            <p class="text-purple-500"><img src="./assets/vue.svg" alt="" /></p>
-            <div class="chats">
-              <p>
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                Corporis, magnam!
+            <div class="app-chats-message" v-else>
+              <p class="text-purple-500">
+                {{ message.user }}
+                <img src="./assets/vue.svg" alt="" />
               </p>
+              <div class="chats">
+                <p class="text-left truncate">
+                  {{ message.message }}
+                </p>
+              </div>
             </div>
-          </div>
+          </template>
         </div>
-        <!--  -->
       </div>
+
       <!-- message-block -->
-      <div class="h-[100px]">
-        <form class="grid gap-2">
-          <input type="text" class="p-2 rounded-xl" />
-          <button type="button" class="justify-self-end">Отправить</button>
+      <div class="h-[80px] mt-2 flex justify-between items-start gap-10">
+        <button
+          type="button"
+          @click="leaveFromChat"
+          class="hover:bg-fuchsia-300"
+        >
+          Покинуть чат {{ me }}
+        </button>
+        <form class="grid gap-2 flex-1" @submit.prevent="handleSubmit">
+          <input type="text" class="p-2 rounded-xl" v-model="message" />
+          <button type="submit" class="justify-self-end">Отправить</button>
         </form>
       </div>
     </main>
   </div>
 </template>
 
-<script setup></script>
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+import { useUserStore } from "./store/user";
+import { inject, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { storeToRefs } from "pinia";
+// =>
+const router = useRouter();
+const scrollContainer = ref<HTMLElement | null>(null);
+const socket = inject<any>("socketIO");
 
-<style lang="scss">
+//store - это объект, обернутый через reactive, то есть нет необходимости писать .value после геттеров, но, как и props в setup, мы не можем его деструктурировать
+const store = useUserStore();
+//Чтобы извлечь свойства из хранилища, сохраняя их реактивность
+const { messages, name: me } = storeToRefs(store);
+
+const message = ref("");
+function leaveFromChat() {
+  localStorage.removeItem("user");
+  router.push("/");
+}
+onMounted(() => {
+  console.log("on Mounted ");
+  socket.on("response", (data: any) => {
+    console.log(data);
+    store.addMessage(data);
+  });
+
+  socket.on("responseNewUser", (data: any) => {
+    store.addUsers(data);
+  });
+
+  console.log("✌️name --->", me);
+  console.log("✌️messages --->", messages);
+});
+
+// удаляем все слушатели response для этого сокета
+onUnmounted(() => {
+  socket.off("response");
+  socket.off("responseNewUser");
+});
+
+watch(messages, (newVal, oldVal) => {
+  console.log("Изменилось:", oldVal, "=>", newVal);
+  // Подождать обновления DOM, затем прокрутить вниз
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+      console.log("✌️scrollContainer --->", scrollContainer.value.scrollHeight);
+    }
+  });
+});
+// как только будет сабмит формы отправить сообщение на сервер, а сервер отправит его всем пользователям
+function handleSubmit() {
+  if (message.value.trim() && me) {
+    socket.emit("message", {
+      user: me,
+      message: message.value,
+      id: `${socket.id}-${Date.now()}`,
+      socketId: socket.id,
+    });
+  }
+
+  console.log({
+    user: me,
+    message: message.value,
+  });
+  // message.value = "";
+}
+
+watch(
+  () => store.users,
+  (newUsers) => {
+    console.log("Users updated (watch):", newUsers);
+  },
+  { deep: true }
+);
+</script>
+
+<style scoped lang="scss">
 .app-chats-message {
   display: grid;
-  grid-template-columns: 32px 1fr;
+  grid-template-columns: auto (minmax(100px, 400px));
   align-items: center;
-  gap: 16px;
-  border: 1px solid black;
+  gap: 20px;
   padding: 8px;
   width: fit-content;
+  background-color: rgb(209, 199, 209);
+  border-radius: 10px;
 }
 .self {
-  grid-template-columns: max-content 32px;
+  grid-template-columns: (minmax(100px, 400px)) auto;
   justify-self: end;
 
   .chats {
@@ -77,10 +178,7 @@
 }
 </style>
 
-<!-- <script setup lang="ts">
-import { ref } from "vue";
-
+<!-- 
 defineProps<{ msg: string }>();
-
 const count = ref(0);
-</script> -->
+-->
