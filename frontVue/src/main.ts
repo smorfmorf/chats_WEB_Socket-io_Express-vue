@@ -4,23 +4,23 @@ import App from "./App.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import Home from "./Home.vue";
 import Chat from "./Chat.vue";
-import FormZod from "./FormZod.vue";
 import { createPinia } from "pinia";
+import FormZod from "./testZod/Form-zod.vue";
 
 const routes = [
   { path: "/", component: Home },
   {
     path: "/chat",
     component: Chat,
-    // Guardian
-    beforeEnter: (to, from, next) => {
-      const isAuthenticated = localStorage.getItem("user");
-      if (isAuthenticated) {
-        next(); // доступ разрешен
-      } else {
-        next("/"); // редирект
-      }
-    },
+    //! Guardian
+    // beforeEnter: (to, from, next) => {
+    //   const isAuthenticated = localStorage.getItem("user");
+    //   if (isAuthenticated) {
+    //     next(); // доступ разрешен
+    //   } else {
+    //     next("/"); // редирект
+    //   }
+    // },
   },
   { path: "/form", component: FormZod },
 ];
