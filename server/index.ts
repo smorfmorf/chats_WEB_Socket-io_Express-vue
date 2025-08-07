@@ -35,7 +35,13 @@ SocketIO.on("connection", (socket) => {
   });
 
   socket.on("disconect", () => {
+    users.splice(users.indexOf(socket.id), 1);
     console.log("User disconect", socket.id);
+  });
+
+  // чтобы не висело постоянно
+  socket.on("typing", (data) => {
+    SocketIO.emit("responseTyping", data, { broadcast: true });
   });
 });
 

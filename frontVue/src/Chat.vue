@@ -53,6 +53,10 @@
               </div>
             </div>
           </template>
+
+          <div class="absolute italic bottom-5">
+            <p>{{ me ? store.statusType : "" }}</p>
+          </div>
         </div>
       </div>
 
@@ -66,7 +70,12 @@
           Покинуть чат {{ me }}
         </button>
         <form class="grid gap-2 flex-1" @submit.prevent="handleSubmit">
-          <input type="text" class="p-2 rounded-xl" v-model="message" />
+          <input
+            type="text"
+            class="p-2 rounded-xl"
+            v-model="message"
+            @keydown="isTyping"
+          />
           <button type="submit" class="justify-self-end">Отправить</button>
         </form>
       </div>
@@ -83,7 +92,6 @@ import { storeToRefs } from "pinia";
 const router = useRouter();
 const scrollContainer = ref<HTMLElement | null>(null);
 const socket = inject<any>("socketIO");
-
 //store - это объект, обернутый через reactive, то есть нет необходимости писать .value после геттеров, но, как и props в setup, мы не можем его деструктурировать
 const store = useUserStore();
 //Чтобы извлечь свойства из хранилища, сохраняя их реактивность
@@ -92,6 +100,7 @@ const { messages, name: me } = storeToRefs(store);
 const message = ref("");
 function leaveFromChat() {
   localStorage.removeItem("user");
+  socket.emit("disconect");
   router.push("/");
 }
 onMounted(() => {
@@ -105,6 +114,10 @@ onMounted(() => {
     store.addUsers(data);
   });
 
+  socket.on("responseTyping", (data: any) => {
+    store.setStatusType(data);
+  });
+
   console.log("✌️name --->", me);
   console.log("✌️messages --->", messages);
 });
@@ -115,16 +128,11 @@ onUnmounted(() => {
   socket.off("responseNewUser");
 });
 
-watch(messages, (newVal, oldVal) => {
-  console.log("Изменилось:", oldVal, "=>", newVal);
-  // Подождать обновления DOM, затем прокрутить вниз
-  nextTick(() => {
-    if (scrollContainer.value) {
-      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
-      console.log("✌️scrollContainer --->", scrollContainer.value.scrollHeight);
-    }
-  });
-});
+function isTyping() {
+  console.log("typeee");
+  socket.emit("typing", `${me.value} is typing...`);
+}
+
 // как только будет сабмит формы отправить сообщение на сервер, а сервер отправит его всем пользователям
 function handleSubmit() {
   if (message.value.trim() && me) {
@@ -142,6 +150,16 @@ function handleSubmit() {
   });
   // message.value = "";
 }
+watch(messages, (newVal, oldVal) => {
+  console.log("Изменилось:", oldVal, "=>", newVal);
+  // Подождать обновления DOM, затем прокрутить вниз
+  nextTick(() => {
+    if (scrollContainer.value) {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+      console.log("✌️scrollContainer --->", scrollContainer.value.scrollHeight);
+    }
+  });
+});
 
 watch(
   () => store.users,

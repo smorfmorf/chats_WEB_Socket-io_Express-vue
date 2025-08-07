@@ -14,12 +14,14 @@ interface UserState {
   name: string | null;
   messages: Message[];
   users: Users[];
+  statusType: string;
 }
 interface UserActions {
   setName: (newName: string) => void;
   logout: () => void;
   addMessage: (message: Message) => void;
   addUsers: (users: Users[]) => void;
+  setStatusType: (statusType: string) => void;
 }
 
 // defineStore<
@@ -38,6 +40,7 @@ export const useUserStore = defineStore<"user", UserState, {}, UserActions>(
         name: "asad",
         messages: [],
         users: [],
+        statusType: "",
       };
     },
     actions: {
@@ -54,6 +57,9 @@ export const useUserStore = defineStore<"user", UserState, {}, UserActions>(
       },
       addUsers(users: Users[]) {
         this.users = users;
+      },
+      setStatusType(statusType: string) {
+        this.statusType = statusType;
       },
     },
   }
