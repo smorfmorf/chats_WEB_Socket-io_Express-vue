@@ -41,6 +41,7 @@ SocketIO.on("connection", (socket) => {
 
   // чтобы не висело постоянно
   socket.on("typing", (data) => {
+    console.log("✌️data --->", data);
     SocketIO.emit("responseTyping", data, { broadcast: true });
   });
 });

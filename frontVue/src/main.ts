@@ -6,12 +6,10 @@ import Home from "./Home.vue";
 import Chat from "./Chat.vue";
 import { createPinia } from "pinia";
 import FormZod from "./testZod/Form-zod.vue";
+import Layout from "./layout/Layout.vue";
 
 const routes = [
-  { path: "/", component: Home },
   {
-    path: "/chat",
-    component: Chat,
     //! Guardian
     // beforeEnter: (to, from, next) => {
     //   const isAuthenticated = localStorage.getItem("user");
@@ -21,8 +19,21 @@ const routes = [
     //     next("/"); // редирект
     //   }
     // },
+    path: "",
+    component: Layout,
+    children: [
+      {
+        path: "",
+        component: Home,
+      },
+      {
+        path: "/chat",
+        component: Chat,
+      },
+      { path: "/form", component: FormZod },
+    ],
   },
-  { path: "/form", component: FormZod },
+  { path: "/test", component: FormZod },
 ];
 
 const router = createRouter({

@@ -55,7 +55,7 @@
           </template>
 
           <div class="absolute italic bottom-5">
-            <p>{{ me ? store.statusType : "" }}</p>
+            <p>{{ !isMyMessage ? store.statusType : "" }}</p>
           </div>
         </div>
       </div>
@@ -92,45 +92,26 @@ import { storeToRefs } from "pinia";
 const router = useRouter();
 const scrollContainer = ref<HTMLElement | null>(null);
 const socket = inject<any>("socketIO");
-//store - это объект, обернутый через reactive, то есть нет необходимости писать .value после геттеров, но, как и props в setup, мы не можем его деструктурировать
+const isMyMessage = ref(false);
+let typingTimeout: number;
+
+//*store - это объект, обернутый через reactive, то есть нет необходимости писать .value после геттеров, но, как и props в setup, мы не можем его деструктурировать
 const store = useUserStore();
 //Чтобы извлечь свойства из хранилища, сохраняя их реактивность
 const { messages, name: me } = storeToRefs(store);
-
 const message = ref("");
+
 function leaveFromChat() {
   localStorage.removeItem("user");
   socket.emit("disconect");
   router.push("/");
 }
-onMounted(() => {
-  console.log("on Mounted ");
-  socket.on("response", (data: any) => {
-    console.log(data);
-    store.addMessage(data);
-  });
-
-  socket.on("responseNewUser", (data: any) => {
-    store.addUsers(data);
-  });
-
-  socket.on("responseTyping", (data: any) => {
-    store.setStatusType(data);
-  });
-
-  console.log("✌️name --->", me);
-  console.log("✌️messages --->", messages);
-});
-
-// удаляем все слушатели response для этого сокета
-onUnmounted(() => {
-  socket.off("response");
-  socket.off("responseNewUser");
-});
 
 function isTyping() {
-  console.log("typeee");
-  socket.emit("typing", `${me.value} is typing...`);
+  socket.emit("typing", {
+    socketID: socket.id,
+    text: `${me.value} is typing...`,
+  });
 }
 
 // как только будет сабмит формы отправить сообщение на сервер, а сервер отправит его всем пользователям
@@ -148,8 +129,36 @@ function handleSubmit() {
     user: me,
     message: message.value,
   });
-  // message.value = "";
 }
+
+onMounted(() => {
+  console.log("on Mounted ");
+  socket.on("response", (data: any) => {
+    console.log(data);
+    store.addMessage(data);
+  });
+
+  socket.on("responseNewUser", (data: any) => {
+    store.addUsers(data);
+  });
+
+  socket.on("responseTyping", (data: any) => {
+    store.setStatusType(data.text);
+    isMyMessage.value = data.socketID === socket.id;
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      store.setStatusType("");
+    }, 1000);
+  });
+});
+
+// удаляем все слушатели response для этого сокета
+onUnmounted(() => {
+  socket.off("response");
+  socket.off("responseNewUser");
+});
+
 watch(messages, (newVal, oldVal) => {
   console.log("Изменилось:", oldVal, "=>", newVal);
   // Подождать обновления DOM, затем прокрутить вниз

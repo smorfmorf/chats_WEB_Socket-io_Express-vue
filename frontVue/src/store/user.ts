@@ -27,7 +27,7 @@ interface UserActions {
 // defineStore<
 //   "user",         // id стора
 //   UserState,      // state
-//   {},             // getters (если не используешь — просто {})
+//   {},             // getters "computed" (если не используешь — просто {})
 //   UserActions     // actions
 // >
 
@@ -37,14 +37,14 @@ export const useUserStore = defineStore<"user", UserState, {}, UserActions>(
     state: () => {
       return {
         //TODO Pinia сам превращает это в ref
-        name: "asad",
+        name: localStorage.getItem("user") || "Ваас",
         messages: [],
         users: [],
         statusType: "",
       };
     },
     actions: {
-      setName(newName: string) {
+      setName(newName) {
         this.name = newName;
         localStorage.setItem("user", newName);
       },
@@ -52,13 +52,13 @@ export const useUserStore = defineStore<"user", UserState, {}, UserActions>(
         this.name = "";
         localStorage.removeItem("user");
       },
-      addMessage(message: Message) {
+      addMessage(message) {
         this.messages.push(message);
       },
-      addUsers(users: Users[]) {
+      addUsers(users) {
         this.users = users;
       },
-      setStatusType(statusType: string) {
+      setStatusType(statusType) {
         this.statusType = statusType;
       },
     },

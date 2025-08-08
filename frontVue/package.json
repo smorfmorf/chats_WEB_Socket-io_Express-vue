@@ -11,6 +11,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "@vee-validate/zod": "^4.15.1",
+    "lodash.debounce": "^4.0.8",
     "pinia": "^3.0.3",
     "sass": "^1.89.2",
     "socket.io-client": "^4.8.1",
@@ -21,6 +22,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.8.3",
